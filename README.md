@@ -26,8 +26,9 @@
 执行`docker run -p 1935:1935 -p 7001:7001 -p 7002:7002 -d --name livego gwuhaolin/livego`启动
 
 #### 从源码编译
-1. 下载源码 `git clone https://github.com/gwuhaolin/livego.git`
-2. 去 livego 目录中 执行 `go build`
+首先确保系统已经具备golang环境，环境部署可以参考：https://golang.google.cn/dl/
+1. 下载源码 `git clone https://github.com/gwuhaolin/livego.git`
+2. 去 livego 目录中 执行 `go build`（如果执行报错提示proxy.golang.org访问超时可以在运行前执行“export GOPROXY=https://goproxy.io”）
 
 ## 使用
 2. 启动服务：执行 `livego` 二进制文件启动 livego 服务；
@@ -36,6 +37,72 @@
     - `RTMP`:`rtmp://localhost:1935/live/movie`
     - `FLV`:`http://127.0.0.1:7001/live/movie.flv`
     - `HLS`:`http://127.0.0.1:7002/live/movie.m3u8`
+
+## 执行参数
+livego具备指定参数运行：
+Usage of ./livego:
+  -cfgfile string
+        configure filename (default "livego.cfg")
+  -filFile string
+        output flv file name (default "./out.flv")
+  -gopNum int
+        gop num (default 1)
+  -hls-addr string
+        HLS server listen address (default ":7002")
+  -httpflv-addr string
+        HTTP-FLV server listen address (default ":7001")
+  -manage-addr string
+        HTTP manage interface server listen address (default ":8090")
+  -readTimeout int
+        read time out (default 10)
+  -rtmp-addr string
+        RTMP server listen address (default ":1935")
+  -writeTimeout int
+        write time out (default 10)
+
+## 已服务形式运行livego
+1.添加livego运行服务文件:vi /etc/systemd/system/livego.service
+
+[Unit]
+Description=livego
+
+[Service]
+Restart=always
+RestartSec=3
+Type=simple
+SyslogIdentifier=livego
+PermissionsStartOnly=true
+ExecStart=/opt/livego/livego -cfgfile /opt/livego/livego.cfg 
+
+[Install]
+WantedBy=multi-user.target
+
+2.设定livego开机启动
+systemctl daemon-reload
+sudo systemctl enable livego
+sudo systemctl start livego
+
+3.查看服务状态
+sudo systemctl status livego
+
+● livego.service - livego
+   Loaded: loaded (/etc/systemd/system/livego.service; disabled; vendor preset: disabled)
+   Active: active (running) since Wed 2019-10-30 17:28:13 CST; 21min ago
+ Main PID: 88531 (livego)
+   CGroup: /system.slice/livego.service
+           └─88531 /opt/livego/livego -cfgfile /opt/livego/livego.cfg
+
+Oct 30 17:28:13 centos-7-x64-206 livego[88531]: "hlson":"on"
+Oct 30 17:28:13 centos-7-x64-206 livego[88531]: }
+Oct 30 17:28:13 centos-7-x64-206 livego[88531]: ]
+Oct 30 17:28:13 centos-7-x64-206 livego[88531]: }
+Oct 30 17:28:13 centos-7-x64-206 livego[88531]: 2019/10/30 17:28:13 liveconfig.go:49: get config json d...]}]}
+Oct 30 17:28:13 centos-7-x64-206 livego[88531]: 2019/10/30 17:28:13 main.go:62: hls server enable....
+Oct 30 17:28:13 centos-7-x64-206 livego[88531]: 2019/10/30 17:28:13 main.go:70: RTMP Listen On :1935
+Oct 30 17:28:13 centos-7-x64-206 livego[88531]: 2019/10/30 17:28:13 main.go:105: HTTP-Operation listen ...8090
+Oct 30 17:28:13 centos-7-x64-206 livego[88531]: 2019/10/30 17:28:13 main.go:43: HLS listen On :7002
+Oct 30 17:28:13 centos-7-x64-206 livego[88531]: 2019/10/30 17:28:13 main.go:87: HTTP-FLV listen On :7001
+Hint: Some lines were ellipsized, use -l to show in full.
 
 
 ### [和 flv.js 搭配使用](https://github.com/gwuhaolin/blog/issues/3)
